@@ -44,23 +44,32 @@ function Get-PackageUpdates {
     }
 
     # Check for PSGallery updates
-    $modules = Get-Module -ListAvailable
-    #group to identify modules with multiple versions installed
-    $g = $modules | Group-Object name -NoElement | Where-Object count -gt 1
-    $gallery = $modules.where({$_.repositorysourcelocation})
+    $groupedModules = Get-Module -ListAvailable | Where-Object {$_.repositorysourcelocation} | Group-Object Name
+    # group and keep highest version
+    $gallery = @()
+    foreach ($moduleGroup in $groupedModules) {
+        $moduleToKeep = $moduleGroup.Group[0]
+        foreach ($module in $moduleGroup.Group) {
+            if ($module.version -gt $moduleToKeep.version) {
+                $moduleToKeep = $module
+            } 
+        }
+        Write-Host "$($moduleToKeep.Name) $($moduleToKeep.Version)"
+        $gallery += $moduleToKeep 
+    }    
     foreach ($module in $gallery) {
         #find the current version in the gallery
         Try {
             $online = Find-Module -Name $module.name -Repository PSGallery -ErrorAction Stop
+            #compare versions
+            if ($online.version -gt $module.version) {
+                Write-Host "$($module.name): Online - $($online.version), local - $($module.version)"
+                $ps_count++
+            } 
         }
         Catch {
             # Who cares, not found
-        }
-
-        #compare versions
-        if ($online.version -gt $module.version) {
-            $ps_count++
-        } 
+        }        
     } #foreach
 
     return New-Object -TypeName PSObject -Property @{ 
