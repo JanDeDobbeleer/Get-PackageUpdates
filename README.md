@@ -4,6 +4,10 @@ Print Chocolatey and PSGallery updates in your PowerShell session
 
 ## Installation
 
+Install the module from the PowerShell Gallery:
+
+    Install-Module Get-PackageUpdates -Scope CurrentUser
+
 Add the following lines to your $profile:
 
     Import-Module Get-PackageUpdates
